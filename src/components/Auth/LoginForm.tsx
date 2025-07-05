@@ -51,7 +51,18 @@ export default function LoginForm() {
         await authService.signIn(email, password);
       }
     } catch (err: any) {
-      setError(err.message);
+      // Handle specific case where user already exists
+      if (err.message === 'User already registered' || err.message.includes('user_already_exists')) {
+        setSuccess('This email is already registered. Please sign in with your existing account.');
+        setIsRegistering(false);
+        setPassword('');
+        setConfirmPassword('');
+        setFullName('');
+        setInstitution('');
+        setRole('student');
+      } else {
+        setError(err.message);
+      }
     } finally {
       setLoading(false);
     }
