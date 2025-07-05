@@ -3,16 +3,30 @@ import type { User } from '../types';
 
 export const authService = {
   async signUp(email: string, password: string, userData: Partial<User>) {
-    const { data, error } = await supabase.auth.signUp({
+    // First, sign up the user with Supabase Auth
+    const { data: authData, error: authError } = await supabase.auth.signUp({
       email,
-      password,
-      options: {
-        data: userData
-      }
+      password
     });
     
-    if (error) throw error;
-    return data;
+    if (authError) throw authError;
+    
+    // If sign up was successful and we have a user, create their profile
+    if (authData.user) {
+      const { error: profileError } = await supabase
+        .from('users')
+        .insert({
+          id: authData.user.id,
+          email: authData.user.email,
+          full_name: userData.full_name,
+          role: userData.role,
+          institution: userData.institution
+        });
+      
+      if (profileError) throw profileError;
+    }
+    
+    return authData;
   },
 
   async signIn(email: string, password: string) {
