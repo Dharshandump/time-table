@@ -31,20 +31,29 @@ export const authService = {
   },
 
   async getCurrentUser() {
-    const { data: { user }, error } = await supabase.auth.getUser();
-    if (error) throw error;
-    
-    if (!user) return null;
-    
-    // Get additional user data from our users table
-    const { data: userData, error: userError } = await supabase
-      .from('users')
-      .select('*')
-      .eq('id', user.id)
-      .single();
-    
-    if (userError) throw userError;
-    return userData;
+    try {
+      const { data: { user }, error } = await supabase.auth.getUser();
+      if (error) throw error;
+      
+      if (!user) return null;
+      
+      // Get additional user data from our users table
+      const { data: userData, error: userError } = await supabase
+        .from('users')
+        .select('*')
+        .eq('id', user.id)
+        .single();
+      
+      if (userError) throw userError;
+      return userData;
+    } catch (error) {
+      // Handle the specific "Auth session missing!" error gracefully
+      if (error instanceof Error && error.message === 'Auth session missing!') {
+        return null;
+      }
+      // Re-throw any other errors
+      throw error;
+    }
   },
 
   onAuthStateChange(callback: (user: User | null) => void) {
